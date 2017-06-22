@@ -10,28 +10,35 @@ import UIKit
 
 class ListNotesTableViewController: UITableViewController {
     
+    var notes = [Note](){
+        didSet{
+            tableView.reloadData()
+        }
+    }
+    
     @IBAction func unwindToListNotesViewController(_ segue: UIStoryboardSegue) {
-        
-        // for now, simply defining the method is sufficient.
-        // we'll add code later
-        
+        notes = CoreDataHelper.retrieveNote()
     }
     
     // 1
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 40
+        return notes.count
     }
     
     // 2
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        // 3
         let cell = tableView.dequeueReusableCell(withIdentifier: "listNotesTableViewCell", for: indexPath) as! ListNotesTableViewCell
         
-        // 4
-        cell.noteTitle.text = "Note Title"
-        cell.modificationTime.text = "Modification Time"
-        // 5
+        cell.noteTitle.text = notes[notes.count - indexPath.row - 1].title
+        cell.modificationTime.text = notes[notes.count - indexPath.row - 1].modificationDate?.convertToString()
         return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete{
+            CoreDataHelper.deleteNote(note: notes[indexPath.row])
+            notes = CoreDataHelper.retrieveNote()
+        }
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -39,8 +46,12 @@ class ListNotesTableViewController: UITableViewController {
         if let identifier = segue.identifier {
             // 2
             if identifier == "displayNote" {
-                // 3
-                print("Transitioning to the Display Note View Controller")
+                let displayNoteViewController = segue.destination as! DisplayNoteViewController
+                let indexPath = tableView.indexPathForSelectedRow!
+                let note = notes[indexPath.row]
+                
+                displayNoteViewController.note = note
+                
             }else if identifier == "addNote" {
                 print("Plus button tapped")
             }
@@ -49,6 +60,7 @@ class ListNotesTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        notes = CoreDataHelper.retrieveNote()
     }
     
 }
